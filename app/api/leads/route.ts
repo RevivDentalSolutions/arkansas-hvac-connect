@@ -76,6 +76,93 @@ async function getSql() {
     await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS highlevel_opportunity_id TEXT`;
     await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS highlevel_last_error TEXT`;
     await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS highlevel_synced_at TIMESTAMPTZ`;
+    await sql`CREATE TABLE IF NOT EXISTS partners (
+      id TEXT PRIMARY KEY,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      legal_name TEXT NOT NULL,
+      display_name TEXT NOT NULL,
+      primary_contact_name TEXT,
+      email TEXT,
+      phone TEXT,
+      status TEXT NOT NULL DEFAULT 'applicant',
+      delivery_priority INTEGER NOT NULL DEFAULT 0,
+      monthly_lead_cap INTEGER,
+      monthly_spend_cap_cents INTEGER,
+      free_pilot_lead_limit INTEGER NOT NULL DEFAULT 3,
+      pilot_started_at TIMESTAMPTZ,
+      license_verified_at TIMESTAMPTZ,
+      insurance_verified_at TIMESTAMPTZ,
+      delivery_method TEXT,
+      billing_contact_email TEXT,
+      notes TEXT
+    )`;
+    await sql`CREATE TABLE IF NOT EXISTS partner_service_types (
+      partner_id TEXT NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
+      service_type TEXT NOT NULL,
+      PRIMARY KEY (partner_id, service_type)
+    )`;
+    await sql`CREATE TABLE IF NOT EXISTS partner_territories (
+      id TEXT PRIMARY KEY,
+      partner_id TEXT NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
+      city TEXT,
+      zip TEXT,
+      CHECK (city IS NOT NULL OR zip IS NOT NULL),
+      UNIQUE (partner_id, city, zip)
+    )`;
+    await sql`CREATE TABLE IF NOT EXISTS partner_lead_types (
+      partner_id TEXT NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
+      lead_type TEXT NOT NULL,
+      PRIMARY KEY (partner_id, lead_type)
+    )`;
+    await sql`CREATE TABLE IF NOT EXISTS lead_assignments (
+      id TEXT PRIMARY KEY,
+      lead_id TEXT NOT NULL UNIQUE REFERENCES leads(id) ON DELETE RESTRICT,
+      partner_id TEXT NOT NULL REFERENCES partners(id) ON DELETE RESTRICT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      reserved_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      delivered_at TIMESTAMPTZ,
+      accepted_at TIMESTAMPTZ,
+      rejected_at TIMESTAMPTZ,
+      disputed_at TIMESTAMPTZ,
+      assignment_status TEXT NOT NULL DEFAULT 'reserved',
+      contractor_disposition TEXT NOT NULL DEFAULT 'pending',
+      billable_status TEXT NOT NULL DEFAULT 'pending',
+      price_key TEXT NOT NULL,
+      price_cents INTEGER NOT NULL DEFAULT 0,
+      pilot_free BOOLEAN NOT NULL DEFAULT FALSE,
+      delivery_reference TEXT,
+      rejection_reason TEXT,
+      dispute_reason TEXT
+    )`;
+    await sql`CREATE TABLE IF NOT EXISTS lead_price_rules (
+      key TEXT PRIMARY KEY,
+      label TEXT NOT NULL,
+      price_cents INTEGER NOT NULL,
+      active BOOLEAN NOT NULL DEFAULT TRUE,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`;
+    await sql`CREATE TABLE IF NOT EXISTS partner_billing_ledger (
+      id TEXT PRIMARY KEY,
+      partner_id TEXT NOT NULL REFERENCES partners(id) ON DELETE RESTRICT,
+      lead_assignment_id TEXT UNIQUE REFERENCES lead_assignments(id) ON DELETE RESTRICT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      amount_cents INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      invoice_reference TEXT,
+      paid_at TIMESTAMPTZ,
+      voided_at TIMESTAMPTZ,
+      dispute_reason TEXT
+    )`;
+    await sql`CREATE INDEX IF NOT EXISTS lead_assignments_partner_status_idx ON lead_assignments (partner_id, assignment_status, delivered_at)`;
+    await sql`CREATE INDEX IF NOT EXISTS partners_status_priority_idx ON partners (status, delivery_priority DESC)`;
+    await sql`INSERT INTO lead_price_rules (key, label, price_cents)
+      VALUES
+        ('standard_repair', 'Standard repair', 4900),
+        ('urgent_repair', 'Urgent repair', 6900),
+        ('replacement', 'Replacement', 9900),
+        ('hot_replacement', 'High-intent / hot replacement', 12900)
+      ON CONFLICT (key) DO NOTHING`;
     schemaReady = true;
   }
   return sql;
