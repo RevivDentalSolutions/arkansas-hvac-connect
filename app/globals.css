@@ -566,3 +566,40 @@ a {
     font-size: 35px;
   }
 }
+.skip-link { position: fixed; left: 12px; top: -80px; z-index: 100; background: #fff; color: var(--deep); padding: 12px 16px; border: 2px solid var(--blue); }
+.skip-link:focus { top: 12px; }
+.page-hero { background: linear-gradient(120deg, #06223c, #0c4e7b); color: #fff; padding: 58px 0 48px; }
+.page-hero h1 { max-width: 850px; font-size: clamp(36px, 5vw, 58px); line-height: 1.06; letter-spacing: -.045em; margin: 10px 0 16px; }
+.page-hero .lede { color: #e4f2fa; max-width: 790px; }
+.page-hero .button { margin-top: 12px; background: var(--gold); color: var(--deep); }
+.breadcrumbs { display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px; color: #d3e8f5; margin-bottom: 24px; }
+.breadcrumbs a { text-decoration: underline; text-underline-offset: 3px; }
+.updated { font-size: 14px; color: #d3e8f5; }
+.disclosure.compact { max-width: 680px; margin: 14px 0 0; font-size: 13px; }
+.content-layout { display: grid; grid-template-columns: minmax(0, 2.25fr) minmax(240px, .85fr); gap: 54px; align-items: start; }
+.article-body { max-width: 760px; }
+.article-body section { margin-bottom: 44px; scroll-margin-top: 90px; }
+.article-body h2 { font-size: clamp(26px, 3vw, 34px); line-height: 1.15; letter-spacing: -.035em; margin: 0 0 14px; }
+.article-body h3 { font-size: 20px; margin: 24px 0 6px; }
+.article-body p, .article-body li { color: #3f596a; font-size: 17px; }
+.article-body li { margin: 9px 0; }
+.related { position: sticky; top: 96px; border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 24px; }
+.related h2 { font-size: 21px; margin-top: 0; }
+.related ul { list-style: none; padding: 0; }
+.related li { border-top: 1px solid var(--line); padding: 13px 0; }
+.related a { color: #0b5d99; font-weight: 800; }
+.next-step { background: #e3f1f7; border-radius: 14px; padding: 28px; }
+.faq { border-top: 1px solid var(--line); padding-top: 4px; }
+@media (max-width: 850px) {
+  .content-layout { grid-template-columns: 1fr; gap: 20px; }
+  .related { position: static; }
+  .nav-links a { display: none; }
+  .nav-inner { height: 66px; }
+  .brand { font-size: 17px; }
+  .page-hero { padding: 40px 0; }
+}
+@media (max-width: 420px) {
+  .shell { padding-left: 17px; padding-right: 17px; }
+  .brand small { display: none; }
+  .nav-links .button { padding: 10px 12px; font-size: 13px; }
+}

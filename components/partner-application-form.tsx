@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 
 const services = [
@@ -48,9 +49,9 @@ export function PartnerApplicationForm() {
           acceptance. No payment is required for the founding pilot; approved
           applicants receive onboarding instructions.
         </p>
-        <a className="button" href="/partners">
+        <Link className="button" href="/partners">
           Return to partner overview
-        </a>
+        </Link>
       </div>
     );
   return (
@@ -187,9 +188,9 @@ export function PartnerApplicationForm() {
           <label>
             <input type="checkbox" name="termsAcknowledged" required /> I have
             read and agree to the{" "}
-            <a className="link" href="/partners/terms" target="_blank">
+            <Link className="link" href="/partners/terms" target="_blank">
               Partner Terms & Pilot Rules
-            </a>
+            </Link>
             .
           </label>
           <label>

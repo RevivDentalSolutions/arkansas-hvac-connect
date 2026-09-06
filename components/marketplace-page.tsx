@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 
 const cities = [
   "Little Rock",
@@ -8,48 +9,6 @@ const cities = [
   "Benton",
   "Bryant",
 ];
-const labels: Record<string, { title: string; lede: string }> = {
-  "/ac-repair": {
-    title: "AC Repair Help in Central Arkansas",
-    lede: "Tell us what your air conditioner is doing and request help from a participating local HVAC professional.",
-  },
-  "/hvac-replacement": {
-    title: "HVAC Replacement Estimates",
-    lede: "Considering a new HVAC system? Share a few details so your request can be reviewed for an appropriate local professional.",
-  },
-  "/emergency-ac-repair": {
-    title: "Request Help for an Urgent AC Issue",
-    lede: "When cooling stops, send a request with your situation. Availability depends on participating local professionals.",
-  },
-  "/heating-repair": {
-    title: "Heating Repair Help",
-    lede: "Request help for a heating issue from a participating Central Arkansas HVAC professional.",
-  },
-  "/heat-pumps": {
-    title: "Heat Pump Help in Central Arkansas",
-    lede: "Whether you need repair, replacement, or are still figuring it out, start with a quick request.",
-  },
-  "/little-rock": {
-    title: "HVAC Help for Little Rock Homeowners",
-    lede: "Request repair or replacement help for your Little Rock home.",
-  },
-  "/north-little-rock": {
-    title: "HVAC Help for North Little Rock",
-    lede: "A clear starting point for AC, heating, and replacement requests.",
-  },
-  "/conway": {
-    title: "HVAC Help for Conway Homeowners",
-    lede: "Request local help for a repair issue or a new-system estimate.",
-  },
-  "/benton": {
-    title: "HVAC Help for Benton Homeowners",
-    lede: "Tell us what your home needs and we’ll review the request.",
-  },
-  "/bryant": {
-    title: "HVAC Help for Bryant Homeowners",
-    lede: "Start a repair or replacement request in just a few steps.",
-  },
-};
 function classify() {
   const q = new URLSearchParams(location.search);
   if (q.get("utm_medium")?.match(/cpc|ppc|paid/i)) return "paid";
@@ -69,7 +28,7 @@ function LeadForm({
     [done, setDone] = useState(false),
     [busy, setBusy] = useState(false);
   const set = (k: string, v: string) => setData({ ...data, [k]: v });
-  const fields =
+  const fields: Array<[string, string, string[]?]> =
     flow === "repair"
       ? [
           [
@@ -142,7 +101,7 @@ function LeadForm({
             ["Homeowner", "Landlord", "Renter"],
           ],
         ];
-  const contact = [
+  const contact: Array<[string, string, string[]?]> = [
     ["zip", "ZIP code"],
     ["city", "City"],
     ["name", "Your name"],
@@ -213,7 +172,7 @@ function LeadForm({
               <span style={{ width: `${step * 50}%` }} />
             </div>
             <div className="fields">
-              {current.map((f: any) => (
+              {current.map((f) => (
                 <label key={f[0]}>
                   {f[1]}
                   {f[2] ? (
@@ -244,13 +203,13 @@ function LeadForm({
             </div>
             <p className="fine">
               By submitting, you agree to our{" "}
-              <a className="link" href="/terms">
+              <Link className="link" href="/terms">
                 Terms
-              </a>{" "}
+              </Link>{" "}
               and{" "}
-              <a className="link" href="/privacy">
+              <Link className="link" href="/privacy">
                 Privacy Policy
-              </a>
+              </Link>
               , and consent to contact about this request. Your information may
               be shared with participating local HVAC professionals.
             </p>
@@ -272,256 +231,80 @@ function LeadForm({
     </div>
   );
 }
-export function MarketplacePage() {
+export function MarketplacePage({ path = "/", page }: { path?: string; page?: import("@/lib/site-pages").SitePage }) {
   const [flow, setFlow] = useState<"repair" | "replacement" | null>(null);
-  const path = typeof window === "undefined" ? "/" : window.location.pathname;
-  const special =
-    path === "/how-it-works" ||
-    path === "/privacy" ||
-    path === "/terms" ||
-    path === "/contact" ||
-    path === "/guides/ac-not-cooling";
-  const data = labels[path];
-  const title =
-    data?.title ||
-    (path === "/guides/ac-not-cooling"
-      ? "AC Running but Not Cooling?"
-      : "HVAC Trouble? Find Local Help Fast.");
-  const lede =
-    data?.lede ||
-    (path === "/guides/ac-not-cooling"
-      ? "A dirty filter, thermostat issue, frozen coil, or more serious problem can keep your home from cooling. Start with safe checks, then request help if needed."
-      : "Request help for AC repair, heating issues, or a new HVAC system throughout Central Arkansas.");
+  const openRequest = (preferred?: "repair" | "replacement") => setFlow(preferred || page?.flow || "repair");
   return (
     <>
+      <Link className="skip-link" href="#main-content">Skip to main content</Link>
       <header className="nav">
         <div className="shell nav-inner">
-          <a className="brand" href="/">
+          <Link className="brand" href="/" aria-label="Arkansas HVAC Connect home">
             Arkansas HVAC Connect
-            <small>Central Arkansas homeowner referral service</small>
-          </a>
-          <nav className="nav-links">
-            <a href="/how-it-works">How it works</a>
-            <a href="/ac-repair">AC repair</a>
-            <a href="/hvac-replacement">Replacement</a>
-            <a href="/partners">For HVAC Companies</a>
-            <button className="button" onClick={() => setFlow("repair")}>
-              Get HVAC Help
-            </button>
+            <small>Independent homeowner referral platform</small>
+          </Link>
+          <nav className="nav-links" aria-label="Primary navigation">
+            <Link href="/how-it-works">How it works</Link>
+            <Link href="/ac-repair">AC repair</Link>
+            <Link href="/hvac-replacement">Replacement</Link>
+            <Link href="/guides">Guides</Link>
+            <button className="button" onClick={() => openRequest()}>Request HVAC help</button>
           </nav>
         </div>
       </header>
-      {special ? (
-        <main className="section">
-          <article className="article">
-            <p className="eyebrow" style={{ color: "#1267a8" }}>
-              Arkansas HVAC Connect
-            </p>
-            <h1>{title}</h1>
-            <p className="lede">{lede}</p>
-            {path === "/guides/ac-not-cooling" && (
-              <>
-                <h2>Safe things to check first</h2>
-                <ul>
-                  <li>
-                    Confirm your thermostat is set to cool and below room
-                    temperature.
-                  </li>
-                  <li>
-                    Check the filter and replace it if it is visibly dirty.
-                  </li>
-                  <li>
-                    Make sure indoor vents are open and the outdoor unit is
-                    clear of debris.
-                  </li>
-                </ul>
-                <h2>When to request help</h2>
-                <p>
-                  If the system is blowing warm air, freezing, making unusual
-                  noises, or still will not cool after basic checks, a
-                  professional evaluation is a sensible next step.
-                </p>
-              </>
-            )}
-            {path === "/how-it-works" && (
-              <>
-                <h2>1. Tell us what your home needs.</h2>
-                <p>
-                  Choose repair help or replacement estimates and complete a
-                  short request.
-                </p>
-                <h2>2. We review and qualify the request.</h2>
-                <p>
-                  We look at service type, timing, service area, and contact
-                  information.
-                </p>
-                <h2>3. Your request may be shared.</h2>
-                <p>
-                  When appropriate, it may be shared with a participating local
-                  HVAC professional. Arkansas HVAC Connect does not perform HVAC
-                  work or guarantee availability.
-                </p>
-              </>
-            )}
-            {(path === "/privacy" || path === "/terms") && (
-              <>
-                <h2>Draft notice for launch</h2>
-                <p>
-                  This MVP uses draft consumer disclosures and should receive
-                  attorney review before paid traffic, automated SMS, or
-                  scale-up. We collect request and attribution data to review
-                  and route homeowner requests. We may share submitted
-                  information with participating HVAC professionals relevant to
-                  the request.
-                </p>
-                <h2>Contact consent</h2>
-                <p>
-                  By submitting a request, homeowners agree to be contacted
-                  about it by Arkansas HVAC Connect and/or participating
-                  professionals using the contact method provided. Consent is
-                  not a condition of purchase.
-                </p>
-              </>
-            )}
-            {path === "/contact" && (
-              <>
-                <h2>Need to reach us?</h2>
-                <p>
-                  This site is currently request-first. Use the secure request
-                  form so we have the details needed to review your homeowner
-                  HVAC request.
-                </p>
-              </>
-            )}
-            <button className="button" onClick={() => setFlow("repair")}>
-              Start your request
-            </button>
-          </article>
-        </main>
-      ) : (
-        <main>
+      {path === "/" ? (
+        <main id="main-content">
           <section className="hero">
             <div className="shell hero-grid">
               <div>
-                <p className="eyebrow">
-                  Central Arkansas homeowner referral service
-                </p>
-                <h1>{title}</h1>
-                <p>{lede}</p>
-                <p className="disclosure">
-                  Arkansas HVAC Connect is not an HVAC contractor and does not
-                  perform or dispatch HVAC work. Requests may be shared with
-                  appropriate participating local professionals.
-                </p>
+                <p className="eyebrow">Central Arkansas homeowner referral platform</p>
+                <h1>Find the Right Path for HVAC Help</h1>
+                <p>Describe your AC, heating, heat-pump, or replacement need. We review your request and may connect it with a participating local HVAC professional.</p>
+                <p className="disclosure"><strong>Know who you are contacting:</strong> Arkansas HVAC Connect is not an HVAC contractor. We do not perform, price, schedule, guarantee, or dispatch HVAC work.</p>
               </div>
-              <div className="choice-card">
-                <h2>What do you need today?</h2>
-                <p>Choose the path that fits your situation.</p>
+              <div className="choice-card" id="request-help">
+                <h2>What does your home need?</h2>
+                <p>Choose the closest path. The request takes only a few minutes.</p>
                 <div className="choices">
-                  <button className="choice" onClick={() => setFlow("repair")}>
-                    I need HVAC repair help →
-                  </button>
-                  <button
-                    className="choice"
-                    onClick={() => setFlow("replacement")}
-                  >
-                    I need a replacement estimate →
-                  </button>
+                  <button className="choice" onClick={() => openRequest("repair")}>Request repair help →</button>
+                  <button className="choice" onClick={() => openRequest("replacement")}>Request a replacement estimate →</button>
                 </div>
+                <p className="fine">Submitting does not guarantee contact, availability, an appointment, or service.</p>
               </div>
             </div>
           </section>
-          <section className="section">
+          <section className="section" aria-labelledby="needs-heading">
             <div className="shell">
-              <h2>Start with the right request</h2>
-              <p className="lede">
-                Short, homeowner-friendly forms help us understand whether you
-                need a repair or are considering a system replacement.
-              </p>
+              <h2 id="needs-heading">Start with your situation</h2>
+              <p className="lede">Useful information first, then a direct route to the existing homeowner request form.</p>
               <div className="grid3">
-                <div className="card">
-                  <h3>AC repair</h3>
-                  <p>
-                    Cooling issues, warm air, strange noises, frozen systems,
-                    and more.
-                  </p>
-                  <a className="link" href="/ac-repair">
-                    Explore AC repair →
-                  </a>
-                </div>
-                <div className="card">
-                  <h3>HVAC replacement</h3>
-                  <p>
-                    For homeowners comparing a new AC, heat pump, or full HVAC
-                    system.
-                  </p>
-                  <a className="link" href="/hvac-replacement">
-                    Explore replacement →
-                  </a>
-                </div>
-                <div className="card">
-                  <h3>Urgent HVAC issue</h3>
-                  <p>
-                    Share what is happening. Availability depends on
-                    participating professionals.
-                  </p>
-                  <a className="link" href="/emergency-ac-repair">
-                    Request urgent help →
-                  </a>
-                </div>
+                <article className="card"><h3>Cooling problem</h3><p>Warm air, weak airflow, ice, unusual operation, or no cooling.</p><Link className="link" href="/ac-repair">Explore AC repair help →</Link></article>
+                <article className="card"><h3>Replacement planning</h3><p>Compare repair value, system scope, heat pumps, and estimate details.</p><Link className="link" href="/hvac-replacement">Plan an HVAC replacement →</Link></article>
+                <article className="card"><h3>Not sure what is wrong?</h3><p>Work through safe, homeowner-accessible checks without opening equipment.</p><Link className="link" href="/guides/what-to-check-when-ac-stops-working">Use the AC checklist →</Link></article>
               </div>
             </div>
           </section>
-          <section className="section band">
-            <div className="shell">
-              <h2>How requests work</h2>
-              <div className="steps">
-                <div>
-                  <span className="step-num">1</span>
-                  <h3>Tell us what your home needs.</h3>
-                </div>
-                <div>
-                  <span className="step-num">2</span>
-                  <h3>We review and qualify your request.</h3>
-                </div>
-                <div>
-                  <span className="step-num">3</span>
-                  <h3>
-                    Your request may be shared with a local HVAC professional.
-                  </h3>
-                </div>
-              </div>
-              <div className="cities">
-                {cities.map((c) => (
-                  <a
-                    className="city"
-                    key={c}
-                    href={"/" + c.toLowerCase().replaceAll(" ", "-")}
-                  >
-                    {c}
-                  </a>
-                ))}
-              </div>
-            </div>
-          </section>
+          <section className="section band" aria-labelledby="process-heading"><div className="shell"><h2 id="process-heading">How the referral process works</h2><div className="steps">
+            <div><span className="step-num" aria-hidden="true">1</span><h3>Tell us what is happening</h3><p>Provide the property location, symptoms, timing, and contact details.</p></div>
+            <div><span className="step-num" aria-hidden="true">2</span><h3>We review the request</h3><p>We check service type, area, timing, and whether the details are usable.</p></div>
+            <div><span className="step-num" aria-hidden="true">3</span><h3>A professional may contact you</h3><p>An independent participating professional decides fit and availability.</p></div>
+          </div><p><Link className="link" href="/how-it-works">Read the complete process and platform disclosure →</Link></p></div></section>
+          <section className="section"><div className="shell"><h2>Central Arkansas request areas</h2><p>Coverage and professional availability vary by request. Select your city for locally useful request guidance.</p><div className="cities">{cities.map((c) => <Link className="city" key={c} href={"/" + c.toLowerCase().replaceAll(" ", "-")}>{c}</Link>)}</div></div></section>
+          <section className="section band"><div className="shell narrow"><h2>Make a more informed HVAC decision</h2><p>Our homeowner guides explain safe checks and questions—not remote diagnoses or sales claims.</p><p><Link className="button" href="/guides">Browse all homeowner HVAC guides</Link></p></div></section>
         </main>
-      )}
-      <footer className="footer">
-        <div className="shell footer-grid">
-          <div>
-            <strong>Arkansas HVAC Connect</strong>
-            <p className="fine">
-              Homeowner referral service. Not an HVAC contractor.
-            </p>
-          </div>
-          <nav>
-            <a href="/how-it-works">How it works</a> ·{" "}
-            <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> ·{" "}
-            <a href="/contact">Contact</a> ·{" "}
-            <a href="/partners">For HVAC Companies</a>
-          </nav>
-        </div>
-      </footer>
+      ) : page ? (
+        <main id="main-content">
+          <article>
+            <header className="page-hero"><div className="shell narrow"><nav className="breadcrumbs" aria-label="Breadcrumb"><Link href="/">Home</Link><span aria-hidden="true">/</span>{page.type === "guide" && <><Link href="/guides">Guides</Link><span aria-hidden="true">/</span></>}<span aria-current="page">{page.title}</span></nav><p className="eyebrow">{page.eyebrow}</p><h1>{page.title}</h1><p className="lede">{page.intro}</p>{page.updated && <p className="updated">Reviewed {page.updated}</p>}<button className="button" onClick={() => openRequest()}>Start a homeowner request</button><p className="disclosure compact">Independent referral platform—not an HVAC contractor or emergency dispatch service.</p></div></header>
+            <div className="section"><div className="shell content-layout"><div className="article-body">
+              {page.sections.map((section) => <section key={section.heading}><h2>{section.heading}</h2>{section.paragraphs?.map((p) => <p key={p}>{p}</p>)}{section.bullets && <ul>{section.bullets.map((b) => <li key={b}>{b.includes("energy.gov/") || b.includes("energystar.gov/") ? <Link className="link" href={`https://${b}`} rel="external">{b}</Link> : b}</li>)}</ul>}</section>)}
+              {page.faq && <section><h2>Frequently asked questions</h2>{page.faq.map((item) => <div className="faq" key={item.question}><h3>{item.question}</h3><p>{item.answer}</p></div>)}</section>}
+              <section className="next-step"><h2>Ready to describe your HVAC need?</h2><p>Use the secure request flow. Your details may be shared with an appropriate participating professional under the consent shown in the form.</p><button className="button" onClick={() => openRequest()}>Start your request</button></section>
+            </div><aside className="related" aria-labelledby="related-heading"><h2 id="related-heading">Related homeowner resources</h2><ul>{page.related.map((link) => <li key={link.href}><Link href={link.href}>{link.label} →</Link></li>)}</ul><p className="fine"><strong>Platform disclosure:</strong> Arkansas HVAC Connect does not diagnose systems, employ technicians, hold itself out as a contractor, or guarantee a response.</p></aside></div></div>
+          </article>
+        </main>
+      ) : null}
+      <footer className="footer"><div className="shell footer-grid"><div><strong>Arkansas HVAC Connect</strong><p className="fine">Independent Central Arkansas homeowner HVAC referral platform. Not an HVAC contractor.</p></div><nav aria-label="Footer navigation"><Link href="/guides">Guides</Link> · <Link href="/how-it-works">How it works</Link> · <Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link> · <Link href="/contact">Contact</Link> · <Link href="/partners">For HVAC companies</Link></nav></div></footer>
       {flow && <LeadForm flow={flow} onClose={() => setFlow(null)} />}
     </>
   );
