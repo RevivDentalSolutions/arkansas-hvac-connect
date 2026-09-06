@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "For HVAC Companies | Arkansas HVAC Connect",
+  title: { absolute: "For HVAC Companies | Arkansas HVAC Connect" },
   description:
     "Apply for the Arkansas HVAC Connect Founding Partner Pilot for Central Arkansas HVAC businesses.",
   alternates: { canonical: "/partners" },
@@ -23,9 +24,9 @@ export default function PartnersPage() {
             participating local HVAC businesses—we do not perform HVAC services
             ourselves.
           </p>
-          <a className="button partner-cta" href="/partners/apply">
+          <Link className="button partner-cta" href="/partners/apply">
             Apply to Become a Founding Partner
-          </a>
+          </Link>
           <p className="partner-fine">
             No credit card required for the pilot. No subscription or obligation
             to continue.
@@ -84,9 +85,9 @@ export default function PartnersPage() {
               jobs, revenue, or customer purchases.
             </li>
           </ul>
-          <a className="text-cta" href="/partners/terms">
+          <Link className="text-cta" href="/partners/terms">
             Read partner terms and pilot rules →
-          </a>
+          </Link>
         </div>
       </section>
       <section className="section">
@@ -96,9 +97,9 @@ export default function PartnersPage() {
             Apply to be considered for the founding group. We verify business,
             license, and insurance information before any activation.
           </p>
-          <a className="button" href="/partners/apply">
+          <Link className="button" href="/partners/apply">
             Apply to Become a Founding Partner
-          </a>
+          </Link>
           <p className="partner-fine">
             Partner questions: partners@arkansashvacconnect.com
           </p>

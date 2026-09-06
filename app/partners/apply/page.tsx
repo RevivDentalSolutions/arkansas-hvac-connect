@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Apply as a Founding HVAC Partner | Arkansas HVAC Connect",
   description: "Apply for the Arkansas HVAC Connect Founding Partner Pilot.",
   alternates: { canonical: "/partners/apply" },
+  robots: { index: false, follow: true },
 };
 
 export default function PartnerApplyPage() {

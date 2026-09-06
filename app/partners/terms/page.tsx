@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Partner Terms & Pilot Rules | Arkansas HVAC Connect",
+  title: { absolute: "Partner Terms & Pilot Rules | Arkansas HVAC Connect" },
   alternates: { canonical: "/partners/terms" },
+  robots: { index: false, follow: true },
 };
 
 export default function PartnerTermsPage() {
@@ -69,9 +71,9 @@ export default function PartnerTermsPage() {
           legitimate service operations.
         </p>
         <p>
-          <a className="link" href="/partners/apply">
+          <Link className="link" href="/partners/apply">
             Apply for the founding pilot →
-          </a>
+          </Link>
         </p>
       </article>
     </main>
