@@ -304,6 +304,7 @@ export function MarketplacePage() {
             <a href="/how-it-works">How it works</a>
             <a href="/ac-repair">AC repair</a>
             <a href="/hvac-replacement">Replacement</a>
+            <a href="/partners">For HVAC Companies</a>
             <button className="button" onClick={() => setFlow("repair")}>
               Get HVAC Help
             </button>
@@ -392,10 +393,7 @@ export function MarketplacePage() {
                 </p>
               </>
             )}
-            <button
-              className="button"
-              onClick={() => setFlow("repair")}
-            >
+            <button className="button" onClick={() => setFlow("repair")}>
               Start your request
             </button>
           </article>
@@ -519,7 +517,8 @@ export function MarketplacePage() {
           <nav>
             <a href="/how-it-works">How it works</a> ·{" "}
             <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> ·{" "}
-            <a href="/contact">Contact</a>
+            <a href="/contact">Contact</a> ·{" "}
+            <a href="/partners">For HVAC Companies</a>
           </nav>
         </div>
       </footer>
