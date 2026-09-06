@@ -28,7 +28,29 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Arkansas HVAC Connect",
+              url: "https://arkansashvacconnect.com",
+              description:
+                "Independent Central Arkansas homeowner HVAC lead-generation and referral platform.",
+              contactPoint: [
+                {
+                  "@type": "ContactPoint",
+                  email: "partners@arkansashvacconnect.com",
+                  contactType: "partner inquiries",
+                },
+              ],
+            }),
+          }}
+        />
+      </body>
     </html>
   );
 }
