@@ -1,4 +1,4 @@
-import { neon } from "@neondatabase/serverless";
+import { getSql } from "@/lib/postgres";
 
 const allowedServices = new Set([
   "AC repair",
@@ -17,17 +17,6 @@ function validEmail(input: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
 }
 
-async function getSql() {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL is not configured");
-  const sql = neon(url);
-  await sql`CREATE TABLE IF NOT EXISTS partners (id TEXT PRIMARY KEY, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), legal_name TEXT NOT NULL, display_name TEXT NOT NULL, primary_contact_name TEXT, email TEXT, phone TEXT, status TEXT NOT NULL DEFAULT 'applicant', delivery_priority INTEGER NOT NULL DEFAULT 0, monthly_lead_cap INTEGER, monthly_spend_cap_cents INTEGER, free_pilot_lead_limit INTEGER NOT NULL DEFAULT 3, billing_contact_email TEXT, website TEXT, license_number TEXT, notes TEXT)`;
-  await sql`CREATE TABLE IF NOT EXISTS partner_service_types (partner_id TEXT NOT NULL REFERENCES partners(id) ON DELETE CASCADE, service_type TEXT NOT NULL, PRIMARY KEY (partner_id, service_type))`;
-  await sql`CREATE TABLE IF NOT EXISTS partner_territories (id TEXT PRIMARY KEY, partner_id TEXT NOT NULL REFERENCES partners(id) ON DELETE CASCADE, city TEXT, zip TEXT, CHECK (city IS NOT NULL OR zip IS NOT NULL), UNIQUE (partner_id, city, zip))`;
-  await sql`CREATE TABLE IF NOT EXISTS partner_lead_types (partner_id TEXT NOT NULL REFERENCES partners(id) ON DELETE CASCADE, lead_type TEXT NOT NULL, PRIMARY KEY (partner_id, lead_type))`;
-  await sql`CREATE TABLE IF NOT EXISTS partner_applications (id TEXT PRIMARY KEY, partner_id TEXT NOT NULL UNIQUE REFERENCES partners(id) ON DELETE RESTRICT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), application_status TEXT NOT NULL DEFAULT 'pending_verification', insurance_confirmed BOOLEAN NOT NULL, pilot_acknowledged BOOLEAN NOT NULL, terms_acknowledged BOOLEAN NOT NULL, data_acknowledged BOOLEAN NOT NULL, monthly_spend_preference TEXT, raw_payload JSONB NOT NULL, is_test BOOLEAN NOT NULL DEFAULT FALSE)`;
-  return sql;
-}
 
 export async function POST(request: Request) {
   try {
@@ -83,7 +72,7 @@ export async function POST(request: Request) {
         { error: "Website must begin with http:// or https://." },
         { status: 400 },
       );
-    const sql = await getSql();
+    const sql = getSql();
     const partnerId = crypto.randomUUID(),
       applicationId = crypto.randomUUID();
     const leadTypes = [
@@ -91,22 +80,25 @@ export async function POST(request: Request) {
       checked(input, "acceptReplacement") ? "replacement" : "",
       checked(input, "acceptUrgent") ? "urgent" : "",
     ].filter(Boolean);
+    if (!leadTypes.length) return Response.json({error:'Select at least one lead type.'},{status:400});
+    const isTest = input.isTest === true || /^test(?:\b|ing)/i.test(legalName);
     const leadCap = Number(value(input, "monthlyLeadCap", 20));
     const spendPreference =
       value(input, "spendCap", 40) || "decide_after_pilot";
     const spendCap = /^\d+$/.test(spendPreference)
       ? Number(spendPreference)
       : null;
-    await sql`INSERT INTO partners (id, legal_name, display_name, primary_contact_name, email, phone, status, monthly_lead_cap, monthly_spend_cap_cents, billing_contact_email, website, license_number, notes) VALUES (${partnerId}, ${legalName}, ${dbaName || legalName}, ${contactName}, ${businessEmail}, ${phone}, 'pending_verification', ${Number.isInteger(leadCap) && leadCap > 0 ? leadCap : null}, ${spendCap}, ${deliveryEmail}, ${website || null}, ${licenseNumber}, 'Submitted through /partners/apply')`;
+    const queries = [sql`INSERT INTO partners (id, legal_name, display_name, primary_contact_name, email, phone, status, monthly_lead_cap, monthly_spend_cap_cents, billing_contact_email, website, license_number, notes, is_test) VALUES (${partnerId}, ${legalName}, ${dbaName || legalName}, ${contactName}, ${businessEmail}, ${phone}, 'pending_verification', ${Number.isInteger(leadCap) && leadCap > 0 ? leadCap : null}, ${spendCap}, ${deliveryEmail}, ${website || null}, ${licenseNumber}, 'Submitted through /partners/apply', ${isTest})`];
     for (const service of services)
-      await sql`INSERT INTO partner_service_types (partner_id, service_type) VALUES (${partnerId}, ${service}) ON CONFLICT DO NOTHING`;
+      queries.push(sql`INSERT INTO partner_service_types (partner_id, service_type) VALUES (${partnerId}, ${service}) ON CONFLICT DO NOTHING`);
     for (const leadType of leadTypes)
-      await sql`INSERT INTO partner_lead_types (partner_id, lead_type) VALUES (${partnerId}, ${leadType}) ON CONFLICT DO NOTHING`;
+      queries.push(sql`INSERT INTO partner_lead_types (partner_id, lead_type) VALUES (${partnerId}, ${leadType}) ON CONFLICT DO NOTHING`);
     for (const city of cities)
-      await sql`INSERT INTO partner_territories (id, partner_id, city) VALUES (${crypto.randomUUID()}, ${partnerId}, ${city}) ON CONFLICT DO NOTHING`;
+      queries.push(sql`INSERT INTO partner_territories (id, partner_id, city) VALUES (${crypto.randomUUID()}, ${partnerId}, ${city}) ON CONFLICT DO NOTHING`);
     for (const zip of zips)
-      await sql`INSERT INTO partner_territories (id, partner_id, zip) VALUES (${crypto.randomUUID()}, ${partnerId}, ${zip}) ON CONFLICT DO NOTHING`;
-    await sql`INSERT INTO partner_applications (id, partner_id, insurance_confirmed, pilot_acknowledged, terms_acknowledged, data_acknowledged, monthly_spend_preference, raw_payload, is_test) VALUES (${applicationId}, ${partnerId}, ${insurance}, ${pilot}, ${terms}, ${dataUse}, ${spendPreference}, ${JSON.stringify(input)}, ${/^test\b/i.test(legalName)})`;
+      queries.push(sql`INSERT INTO partner_territories (id, partner_id, zip) VALUES (${crypto.randomUUID()}, ${partnerId}, ${zip}) ON CONFLICT DO NOTHING`);
+    queries.push(sql`INSERT INTO partner_applications (id, partner_id, insurance_confirmed, pilot_acknowledged, terms_acknowledged, data_acknowledged, monthly_spend_preference, raw_payload, is_test) VALUES (${applicationId}, ${partnerId}, ${insurance}, ${pilot}, ${terms}, ${dataUse}, ${spendPreference}, ${JSON.stringify(input)}, ${isTest})`);
+    await sql.transaction(queries);
     return Response.json({ applicationId }, { status: 201 });
   } catch {
     return Response.json(

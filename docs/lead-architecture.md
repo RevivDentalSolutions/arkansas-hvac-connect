@@ -1,6 +1,14 @@
 # Lead architecture
-`POST /api/leads` persists a lead with a UUID, flow, request detail, score, consent and full attribution. Future routing can forward the same JSON payload to HighLevel, then notify contractors and update `status` (`new`, `review`, `routed`, `accepted`, `closed`).
 
-Example payload: `{ "flow":"replacement", "service":"Replace full HVAC", "authority":"Homeowner", "zip":"72212", "name":"Jamie Smith", "phone":"501-555-0100", "landingPage":"/hvac-replacement", "utmSource":"google", "channel":"paid", "consent":true }`
+The production application uses Neon PostgreSQL through `DATABASE_URL`.
+`POST /api/leads` validates and persists first, then calls `hvac_route_lead` and
+attempts CRM sync. Once saved, routing/CRM failures do not turn the response into
+an invitation to resubmit. `awaiting_partner` is a durable queue state.
 
-Events ready to emit after IDs are added: `lead_form_started`, `lead_form_step_completed`, `repair_lead_submitted`, `replacement_lead_submitted`, `phone_click`, `email_click`, `cta_click`, and `qualified_lead`.
+`migrations/postgres/001_routing.sql` defines the PostgreSQL routing state machine.
+The older `db/schema.ts`, `drizzle/`, and D1 hosting declaration belong to the
+original Sites/SQLite scaffold and are not production PostgreSQL migrations.
+Do not use `db:generate` or SQLite migrations to manage Neon.
+
+HighLevel is a CRM mirror, never the source of truth for assignment or billing.
+See `docs/routing-repair-2026-09-10.md` for verified state, deployment and operation.
