@@ -9,6 +9,9 @@ export type LeadRoutingInput = {
 
 export type PartnerRoutingCandidate = {
   id: string;
+  // Missing or unapproved status must never make a partner eligible.
+  status?: string | null;
+  isTest?: boolean;
   deliveryPriority: number;
   monthlyLeadsDelivered: number;
   monthlyLeadCap?: number | null;
@@ -58,13 +61,17 @@ export function selectEligiblePartner(
   priceCents: number,
   candidates: PartnerRoutingCandidate[],
 ) {
+  // Invalid pricing must not bypass a spend cap.
+  if (!Number.isSafeInteger(priceCents) || priceCents < 0) return undefined;
+  if (!["repair", "replacement"].includes(lead.flow)) return undefined;
   return candidates
     .filter((candidate) => {
+      if (!['active', 'pilot'].includes(candidate.status || '') || candidate.isTest) return false;
       const hasLeadCapacity =
-        !candidate.monthlyLeadCap ||
+        candidate.monthlyLeadCap == null ||
         candidate.monthlyLeadsDelivered < candidate.monthlyLeadCap;
       const hasSpendCapacity =
-        !candidate.monthlySpendCapCents ||
+        candidate.monthlySpendCapCents == null ||
         candidate.monthlySpendCents + priceCents <=
           candidate.monthlySpendCapCents;
       return (
