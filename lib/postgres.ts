@@ -1,0 +1,5 @@
+import { neon } from '@neondatabase/serverless';
+export function getSql(){
+ if(!process.env.DATABASE_URL)throw Error('DATABASE_URL is not configured');
+ return neon(process.env.DATABASE_URL);
+}

@@ -3,9 +3,11 @@
 ## Current state
 
 The live homeowner flow saves every request in Neon before HighLevel is updated.
-Partner routing is intentionally not active yet. No contractor can receive a
-homeowner's information until an approved partner is added and a delivery
-mechanism is approved.
+Routing is implemented in the explicit PostgreSQL migration. With zero eligible
+partners, new qualified leads remain awaiting_partner. No contractor can receive
+a lead until approval and delivery authorization are recorded. Delivery is
+manual and evidence-based; no outbound transport is enabled. See
+`routing-repair-2026-09-10.md` for the verified repair and operations procedure.
 
 ## Partner data required for onboarding
 

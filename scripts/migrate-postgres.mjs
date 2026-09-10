@@ -1,0 +1,10 @@
+import { readFileSync } from 'node:fs';
+import { statements } from './sql-statements.mjs';
+import { neon } from '@neondatabase/serverless';
+if (!process.env.DATABASE_URL || !process.env.EXPECTED_DATABASE_HOST) throw Error('DATABASE_URL and EXPECTED_DATABASE_HOST required');
+const u=new URL(process.env.DATABASE_URL);
+if (u.hostname!==process.env.EXPECTED_DATABASE_HOST) throw Error('Database host mismatch');
+const sql=neon(process.env.DATABASE_URL);
+const migration=readFileSync(new URL('../migrations/postgres/001_routing.sql',import.meta.url),'utf8');
+await sql.transaction(statements(migration).map(statement => sql.query(statement)));
+console.log('Routing migration applied to verified host');
